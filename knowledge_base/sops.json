@@ -1,0 +1,34 @@
+[
+    {
+        "category": "Infrastructure",
+        "pattern": "general_infra",
+        "keywords": ["server", "infrastructure", "hardware", "vm", "host"],
+        "title": "General Infrastructure SOP",
+        "solution": "1. Verify server health metrics. 2. Check hardware status via IPMI/iLO. 3. Review system logs. 4. Restart services if needed. 5. Escalate to hardware team if physical issue.",
+        "confidence": 0.6
+    },
+    {
+        "category": "Application",
+        "pattern": "general_app",
+        "keywords": ["application", "service", "deploy", "release"],
+        "title": "Application Incident SOP",
+        "solution": "1. Check application health endpoints. 2. Review recent deployments. 3. Check dependency services. 4. Analyze error logs. 5. Restart or rollback as appropriate.",
+        "confidence": 0.55
+    },
+    {
+        "category": "Database",
+        "pattern": "general_db",
+        "keywords": ["database", "sql", "query", "replication", "backup"],
+        "title": "Database Operations SOP",
+        "solution": "1. Check database status and replication lag. 2. Review slow query log. 3. Check storage and memory. 4. Verify backup status. 5. Engage DBA team if needed.",
+        "confidence": 0.6
+    },
+    {
+        "category": "Cloud",
+        "pattern": "cloud_general",
+        "keywords": ["aws", "azure", "gcp", "cloud", "s3", "ec2"],
+        "title": "Cloud Infrastructure SOP",
+        "solution": "1. Check cloud provider status page. 2. Review resource quotas and limits. 3. Check IAM permissions. 4. Review recent infrastructure changes. 5. Scale resources if needed.",
+        "confidence": 0.55
+    }
+]

@@ -1,0 +1,101 @@
+[
+    {
+        "category": "Infrastructure",
+        "pattern": "high_cpu",
+        "keywords": ["cpu", "high", "usage", "performance", "process", "load"],
+        "title": "High CPU Usage Remediation Runbook",
+        "solution": "1. Identify top processes (top -bn1). 2. Check for runaway processes. 3. If application process, restart service. 4. If system process, investigate and adjust resource limits. 5. Scale horizontally if sustained load.",
+        "script": "cpu_healing.sh",
+        "confidence": 0.85
+    },
+    {
+        "category": "Infrastructure",
+        "pattern": "disk_full",
+        "keywords": ["disk", "space", "storage", "full", "partition"],
+        "title": "Disk Space Cleanup Runbook",
+        "solution": "1. Check disk usage (df -h). 2. Find large files (find / -size +100M). 3. Compress old logs. 4. Remove temp files. 5. Configure log rotation. 6. Expand volume if needed.",
+        "script": "disk_cleanup.sh",
+        "confidence": 0.9
+    },
+    {
+        "category": "Infrastructure",
+        "pattern": "memory_leak",
+        "keywords": ["memory", "leak", "oom", "heap", "garbage", "container", "pod", "crash"],
+        "title": "Memory Leak Investigation & Fix Runbook",
+        "solution": "1. Capture heap dump. 2. Analyze memory allocation patterns. 3. Restart service with increased memory. 4. Enable GC logging. 5. File bug for development team.",
+        "script": "memory_healing.sh",
+        "confidence": 0.8
+    },
+    {
+        "category": "Database",
+        "pattern": "connection_pool",
+        "keywords": ["database", "connection", "pool", "exhausted", "timeout", "db"],
+        "title": "Database Connection Pool Reset Runbook",
+        "solution": "1. Check active connections (pg_stat_activity). 2. Kill idle connections. 3. Restart connection pool. 4. Tune pool settings (max_connections, idle_timeout). 5. Monitor for connection leaks.",
+        "script": "db_connection_reset.sh",
+        "confidence": 0.85
+    },
+    {
+        "category": "Security",
+        "pattern": "ssl_expiry",
+        "keywords": ["ssl", "certificate", "expiry", "expiring", "tls", "renewal"],
+        "title": "SSL Certificate Renewal Runbook",
+        "solution": "1. Check certificate expiry (openssl s_client). 2. Trigger cert-manager renewal. 3. If auto-renewal fails, manually request new certificate. 4. Install and verify new certificate. 5. Update monitoring.",
+        "script": "ssl_renewal.sh",
+        "confidence": 0.9
+    },
+    {
+        "category": "Security",
+        "pattern": "brute_force",
+        "keywords": ["ssh", "login", "failed", "brute", "force", "attack", "security"],
+        "title": "Brute Force Attack Response Runbook",
+        "solution": "1. Identify attacking IPs from auth.log. 2. Block IPs in firewall (iptables/WAF). 3. Rotate affected credentials. 4. Enable account lockout policy. 5. Review and harden SSH config.",
+        "script": "security_response.sh",
+        "confidence": 0.85
+    },
+    {
+        "category": "Application",
+        "pattern": "api_latency",
+        "keywords": ["api", "response", "latency", "slow", "timeout", "performance", "degradation"],
+        "title": "API Performance Degradation Runbook",
+        "solution": "1. Check application logs for errors. 2. Review recent deployments. 3. Test dependent services. 4. Check database query performance. 5. Restart application if regression found. 6. Rollback deployment if needed.",
+        "script": "app_restart.sh",
+        "confidence": 0.75
+    },
+    {
+        "category": "Network",
+        "pattern": "network_latency",
+        "keywords": ["network", "latency", "packet", "loss", "datacenter", "replication"],
+        "title": "Network Latency Spike Response Runbook",
+        "solution": "1. Run traceroute to identify bottleneck. 2. Check interface error counters. 3. Failover to redundant path if available. 4. Contact network team for hardware check. 5. Monitor after failover.",
+        "script": "network_recovery.sh",
+        "confidence": 0.7
+    },
+    {
+        "category": "Infrastructure",
+        "pattern": "k8s_crashloop",
+        "keywords": ["kubernetes", "pod", "crash", "crashloop", "restart", "oom", "killed"],
+        "title": "Kubernetes Pod CrashLoopBackOff Runbook",
+        "solution": "1. Check pod logs (kubectl logs). 2. Describe pod for events. 3. If OOMKilled, increase memory limits. 4. If error exit, check application logs. 5. Restart pod with updated config.",
+        "script": "memory_healing.sh",
+        "confidence": 0.8
+    },
+    {
+        "category": "Application",
+        "pattern": "log_anomaly",
+        "keywords": ["log", "error", "anomaly", "volume", "auth", "exception", "null"],
+        "title": "Log Volume Anomaly Investigation Runbook",
+        "solution": "1. Identify error patterns in logs. 2. Check for recent config changes. 3. Review application dependencies. 4. Restart affected service. 5. Enable debug logging temporarily for investigation.",
+        "script": "app_restart.sh",
+        "confidence": 0.65
+    },
+    {
+        "category": "Application",
+        "pattern": "abend",
+        "keywords": ["abend", "abnormal", "crash", "exit", "fatal", "signature"],
+        "title": "Abnormal End (ABEND) Recovery Runbook",
+        "solution": "1. Fetch crash dump and exit code. 2. Restart target service. 3. Perform buffer cleanup. 4. Release file locks. 5. Verify service health.",
+        "script": "abend_healing.sh",
+        "confidence": 0.95
+    }
+]

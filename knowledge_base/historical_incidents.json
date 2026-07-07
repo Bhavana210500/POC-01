@@ -1,0 +1,170 @@
+[
+    {
+        "category": "Infrastructure",
+        "title": "High CPU Usage on prod-web-server-01",
+        "description": "CPU usage has exceeded 95% for the last 10 minutes on production web server. Multiple processes consuming excessive resources. Application response times degrading.",
+        "root_cause": "Runaway telemetry agent telemetry-daemon (PID: 28456) consuming excessive CPU cycles due to connection timeout loop.",
+        "resolution": "Identify top process, kill runaway process telemetry-daemon (PID: 28456), and restart telemetry agent with CPU limits.",
+        "script": "cpu_healing.py"
+    },
+    {
+        "category": "Infrastructure",
+        "title": "Disk Space Critical on db-server-03",
+        "description": "Disk space on /data partition has reached 94%. Database logs are growing rapidly. Risk of database crash if disk fills completely.",
+        "root_cause": "Uncompressed archived logs accumulating in /var/log/db/archive without proper log rotation configuration.",
+        "resolution": "Check disk space, compress archived files older than 3 days, delete stale temporary files in /tmp, and enable automatic log rotation.",
+        "script": "disk_cleanup.py"
+    },
+    {
+        "category": "Infrastructure",
+        "title": "Memory Leak Detected in payment-service",
+        "description": "Memory consumption of payment-service has been steadily increasing. Current usage at 87% of allocated memory. Garbage collection unable to reclaim memory.",
+        "root_cause": "Memory leak in node-based payment-service container. Connections are kept open indefinitely, exhausting heap size.",
+        "resolution": "Capture heap dump, trigger garbage collection, and gracefully restart service order-service-container to restore normal memory bounds.",
+        "script": "memory_healing.py"
+    },
+    {
+        "category": "Database",
+        "title": "Database Connection Pool Exhausted",
+        "description": "All 200 database connections in the pool are in use. New requests are being queued. Average wait time has increased to 15 seconds.",
+        "root_cause": "Active connection leak in user checkout API route. Connections are not returned to the pool after query completion.",
+        "resolution": "Identify and kill idle database connections, increase pool size to 250, and restart connection pool service.",
+        "script": "db_connection_reset.py"
+    },
+    {
+        "category": "Security",
+        "title": "SSL Certificate Expiring in 7 Days",
+        "description": "SSL certificate for api.example.com will expire on 2026-06-18. Automated renewal has not triggered. Manual intervention may be required.",
+        "root_cause": "Automated cert-manager API secret renewal failed due to DNS validation challenge error.",
+        "resolution": "Renew SSL certificate manually using certbot, update DNS challenge configuration, and reload proxy service.",
+        "script": "ssl_renewal.py"
+    },
+    {
+        "category": "Security",
+        "title": "Multiple Failed SSH Login Attempts",
+        "description": "Detected 847 failed SSH login attempts from IP 203.0.113.42 in the last hour. Possible brute force attack targeting production bastion host.",
+        "root_cause": "Automated brute force dictionary attack from IP 203.0.113.42 targeting standard SSH port 22.",
+        "resolution": "Add offending IP address 203.0.113.42 to firewall / iptables drop rules and restrict bastion access to VPN gateway IP.",
+        "script": "security_response.py"
+    },
+    {
+        "category": "Application",
+        "title": "API Response Time Degradation",
+        "description": "Average API response time has increased from 120ms to 2.3s over the last 30 minutes. Affecting /api/v2/orders and /api/v2/checkout endpoints.",
+        "root_cause": "Stale gateway sockets and network descriptor leaks causing request backpressure.",
+        "resolution": "Perform rolling restart of api-gateway container service to flush descriptor table and restore latency.",
+        "script": "app_restart.py"
+    },
+    {
+        "category": "Infrastructure",
+        "title": "Kubernetes Pod CrashLoopBackOff",
+        "description": "Pod order-service-5c8f7d in namespace production is in CrashLoopBackOff state. Last 5 restarts within 10 minutes. Exit code 137 (OOMKilled).",
+        "root_cause": "Service pod terminated by Kubernetes kernel OOM killer due to memory spikes during bulk CSV imports.",
+        "resolution": "Increase container memory allocation limits to 4GB in Helm values configuration and restart deployment.",
+        "script": "memory_healing.py"
+    },
+    {
+        "category": "Network",
+        "title": "Network Latency Spike Between Data Centers",
+        "description": "Network latency between DC-East and DC-West has spiked to 250ms (normally 15ms). Packet loss at 3.2%. Affecting cross-DC database replication.",
+        "root_cause": "Interface degradation on primary inter-DC trunk link causing packet drop retransmissions.",
+        "resolution": "Failover traffic to secondary optical connection pathway and flag degraded link for hardware replacement.",
+        "script": "network_recovery.py"
+    },
+    {
+        "category": "Application",
+        "title": "Log Volume Anomaly Detected",
+        "description": "Error log volume has increased 500% in the last 15 minutes for auth-service. Primarily NullPointerException errors in JWT validation module.",
+        "root_cause": "Stale auth-service cache and database lookup failures causing validation exceptions.",
+        "resolution": "Restart auth-service cache pods and flush verification cache to resolve token exceptions.",
+        "script": "app_restart.py"
+    },
+    {
+        "category": "Application",
+        "title": "Abnormal End (ABEND) Recovery Runbook",
+        "description": "The service exited abruptly with exit code 1. Stack trace indicates file lock failure on lockfile.dat.",
+        "root_cause": "Transient process crash leaving locks active on billing database lockfile.",
+        "resolution": "Release stale file lock for billing service, clear transient cache, and restart process billing-agent.",
+        "script": "abend_healing.py"
+    },
+    {
+        "category": "Application",
+        "title": "Splunk Alert: Simulated Splunk Log Alert",
+        "description": "Host: splunk-simulated-host\nRaw Event: 2026-06-11 08:46:19 ERROR: Host db-server-03 experienced an abend in payment-gateway: NullPointerException",
+        "root_cause": "Fatal Exception 'NullPointerException' raised in module checkout_gateway.py (line 387) on host 'splunk-simulated-host'.",
+        "resolution": "Restart auth-service cache pods and flush verification cache to resolve token exceptions.",
+        "script": "INC-BF4F31E3_remediate.py"
+    },
+    {
+        "category": "Application",
+        "title": "Splunk Alert: Scheduled Log Triage Match",
+        "description": "Host: host=web-svr-prod-10\nRaw Event: 2026-06-26 13:25:00 [CRITICAL] host=web-svr-prod-10 event_id=9909 message=\"severe system abend in database pool\"",
+        "root_cause": "Database connection pool exhausted. Active connection leak detected in API endpoint '/api/v2/checkout' on database host 'host=web-svr-prod-10'. Pool utilization: 1/200.",
+        "resolution": "Restart auth-service cache pods and flush verification cache to resolve token exceptions.",
+        "script": "INC-6F986347_remediate.py"
+    },
+    {
+        "category": "Application",
+        "title": "Splunk Alert: Scheduled Log Triage Match",
+        "description": "Host: my-test-machine\nRaw Event: 2026-06-24 10:15:32 host=\"my-test-machine\" source=\"testfile.log\" sourcetype=\"generic_single_line\" ERROR: Database connection pool exhausted on db-primary-01. Connections leaking.",
+        "root_cause": "Database connection pool exhausted. Active connection leak detected in API endpoint '/api/v2/orders' on database host 'my-test-machine'. Pool utilization: 1/200.",
+        "resolution": "Restart auth-service cache pods and flush verification cache to resolve token exceptions.\n\n",
+        "script": "INC-6067257C_remediate.py"
+    },
+    {
+        "category": "Application",
+        "title": "Splunk Alert: Scheduled Log Triage Match",
+        "description": "Host: my-test-machine\nRaw Event: 2026-06-24 10:03:00 ERROR Application abend exception in main thread: stack overflow in billing module",
+        "root_cause": "Fatal Exception 'IndexOutOfRangeError' raised in module checkout_gateway.py (line 204) on host 'my-test-machine'.",
+        "resolution": "restart auth-service cache pods and flush verification",
+        "script": "INC-2E1E4D13_remediate.py"
+    },
+    {
+        "category": "Application",
+        "title": "Splunk Alert: Scheduled Log Triage Match",
+        "description": "Host: my-test-machine\nRaw Event: 2026-06-24 10:00:40 INFO  Cache refreshed - 500 items loaded",
+        "root_cause": "Fatal Exception 'NullPointerException' raised in module checkout_gateway.py (line 106) on host 'my-test-machine'.",
+        "resolution": "Need to check module check_out.py and run the file again",
+        "script": "INC-0C295453_remediate.py"
+    },
+    {
+        "category": "Application",
+        "title": "Splunk Alert: Scheduled Log Triage Match",
+        "description": "Host: my-test-machine\nRaw Event: 2026-06-24 10:00:45 ERROR Unhandled exception in checkout module",
+        "root_cause": "Fatal Exception 'JWTDecodeError' raised in module checkout_gateway.py (line 374) on host 'my-test-machine'.",
+        "resolution": "check the file and restart the file",
+        "script": "INC-FF25AEE3_remediate.py"
+    },
+    {
+        "category": "Application",
+        "title": "Splunk Alert: Scheduled Log Triage Match",
+        "description": "Host: my-test-machine\nRaw Event: 2026-06-24 10:00:10 DEBUG Database connection established",
+        "root_cause": "Database connection pool exhausted. Active connection leak detected in API endpoint '/api/v2/checkout' on database host 'my-test-machine'. Pool utilization: 1/200.",
+        "resolution": "restart the database connection ",
+        "script": "INC-F5610CFF_remediate.py"
+    },
+    {
+        "category": "Application",
+        "title": "Splunk Alert: Scheduled Log Triage Match",
+        "description": "Host: my-test-machine\nRaw Event: 2026-06-24 10:02:00 ERROR OutOfMemory (oom) crash occurred during transaction log checkpoint",
+        "root_cause": "Memory leak in application heap space. Pod 'k8s-order-pod-a49' on host 'my-test-machine' has been terminated by Kubernetes kernel OOM killer (exit code 137).",
+        "resolution": "Restart the pod k8s-order-pod-a49 and run again",
+        "script": "INC-179DB91E_remediate.py"
+    },
+    {
+        "category": "Application",
+        "title": "Splunk Alert: Scheduled Log Triage Match",
+        "description": "Host: my-test-machine\nRaw Event: 2026-06-24 10:01:05 DEBUG Config file reloaded successfully",
+        "root_cause": "Fatal Exception 'ConnectionResetError' raised in module checkout_gateway.py (line 300) on host 'my-test-machine'.",
+        "resolution": "Restart auth-service cache pods and flush verification cache to resolve token exceptions.\n\n",
+        "script": "INC-EF07B649_remediate.py"
+    },
+    {
+        "category": "Application",
+        "title": "Splunk Alert: Custom Unfamiliar Alert Signature",
+        "description": "Host: print-svr-01\nRaw Event: 2026-06-15 11:22:33 ERROR: Host print-svr-01 experienced print spooler service driver failure with backlog",
+        "root_cause": "Fatal Exception 'NullPointerException' raised in module checkout_gateway.py (line 387) on host 'splunk-simulated-host'.",
+        "resolution": "please restart postgres-database service and clear transaction log caches",
+        "script": "INC-D863A3F0_remediate.py"
+    }
+]
