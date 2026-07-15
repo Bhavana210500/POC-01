@@ -176,11 +176,15 @@ class Orchestrator:
             logger.error(f"Pipeline error for incident {incident_id}: {e}")
             if incident_id:
                 await add_timeline_entry(
-                    incident_id, "system", "Orchestrator", "error", str(e)
+                    incident_id, "system", "Orchestrator", "error",
+                    f"Pipeline error: {e}. Routing to manual approval instead of escalating."
                 )
-                await update_incident(incident_id, {"status": "escalated"})
+                await update_incident(
+                    incident_id,
+                    {"status": "awaiting_approval", "assigned_agent": "agent-05"},
+                )
                 await self.notify_listeners(
-                    "pipeline_error", {"incident_id": incident_id, "error": str(e)}
+                    "awaiting_approval", {"incident_id": incident_id, "error": str(e)}
                 )
 
     async def handle_approval_response(

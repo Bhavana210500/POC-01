@@ -210,7 +210,36 @@ def _try_session_key_auth(base_url, username, password, client):
 _SESSION_LOGGED_IN = False
 _SESSION_RETRY_COUNT = 0
 _SESSION_MAX_RETRIES = 2
-_LAST_FETCH_TIME = None
+_LAST_FETCH_TIME = None  # Epoch timestamp of the latest Splunk event seen
+
+
+def _update_last_fetch_time(results):
+    """Track the latest event _time from Splunk results.
+    Uses Splunk's own event timestamp (not Python's clock) to ensure
+    the next poll's earliest_time exactly continues from where we left off.
+    """
+    global _LAST_FETCH_TIME
+    latest = _LAST_FETCH_TIME
+    for r in results:
+        event_time = r.get("_time", "")
+        if event_time:
+            try:
+                # Splunk _time is ISO 8601 format, convert to epoch
+                import datetime as _dt
+                # Handle formats like "2026-07-15T10:30:00.000+05:30"
+                t = _dt.datetime.fromisoformat(event_time).timestamp()
+                if latest is None or t > latest:
+                    latest = t
+            except (ValueError, TypeError):
+                pass
+    if latest is not None and latest != _LAST_FETCH_TIME:
+        # Add 1-second buffer to avoid re-fetching the boundary event
+        _LAST_FETCH_TIME = latest + 1
+        log(f"[TIME] Next poll will fetch events after epoch {int(_LAST_FETCH_TIME)}")
+    elif _LAST_FETCH_TIME is None:
+        # No _time in results — fall back to Python clock
+        _LAST_FETCH_TIME = time.time()
+        log(f"[TIME] No event _time found; using current time as baseline.")
 
 
 def fetch_splunk_logs_session():
@@ -330,7 +359,7 @@ def fetch_splunk_logs_session():
                 f"[SESSION] Search complete! Retrieved {len(results)} events from Splunk Cloud."
             )
             _SESSION_RETRY_COUNT = 0
-            _LAST_FETCH_TIME = current_time
+            _update_last_fetch_time(results)
             return results
         else:
             log(f"[SESSION] Search failed: HTTP {resp.status_code}")
@@ -441,19 +470,21 @@ def fetch_splunk_logs_real():
                     last_err = f"{type(e).__name__}: {e}"
 
         if success:
-            _LAST_FETCH_TIME = current_time
+            _update_last_fetch_time(results)
             return results
         else:
             log(
                 f"Splunk API connection fallback active (Last error: {last_err}). Simulating live Splunk forwarder via testfile.log monitoring."
             )
-            _LAST_FETCH_TIME = current_time  # Track time even on mock fallback
+            if _LAST_FETCH_TIME is None:
+                _LAST_FETCH_TIME = current_time
             return fetch_splunk_logs_mock()
     except Exception as e:
         log(
             f"Splunk API unexpected error ({type(e).__name__}: {e}). Simulating live Splunk forwarder via testfile.log monitoring."
         )
-        _LAST_FETCH_TIME = time.time()  # Track time even on mock fallback
+        if _LAST_FETCH_TIME is None:
+            _LAST_FETCH_TIME = time.time()
         return fetch_splunk_logs_mock()
 
 

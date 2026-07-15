@@ -291,17 +291,23 @@ print("[ABEND_HEALING] [FINISHED] ABEND crash recovered.")
                 await self.log_action(
                     incident_id,
                     "healing_error",
-                    f"[ERROR] Self-healing script failed (exit code {return_code}): {err_str}",
+                    f"[ERROR] Self-healing script failed (exit code {return_code}): {err_str}. Routing to manual approval.",
                 )
-                await update_incident(incident_id, {"status": "escalated"})
+                await update_incident(
+                    incident_id,
+                    {"status": "awaiting_approval", "assigned_agent": "agent-05"},
+                )
 
         except Exception as e:
             await self.log_action(
                 incident_id,
                 "healing_failed",
-                f"[ERROR] Failed to run self-healing background task: {type(e).__name__}: {e}",
+                f"[ERROR] Failed to run self-healing background task: {type(e).__name__}: {e}. Routing to manual approval.",
             )
-            await update_incident(incident_id, {"status": "escalated"})
+            await update_incident(
+                incident_id,
+                {"status": "awaiting_approval", "assigned_agent": "agent-05"},
+            )
 
     async def process(self, incident_id) -> dict:
         """Execute background self-healing subprocess for an incident."""
