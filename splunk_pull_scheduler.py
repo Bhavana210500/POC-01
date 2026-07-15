@@ -282,7 +282,7 @@ def fetch_splunk_logs_session():
                 "search": search_query,
                 "output_mode": "json",
                 "earliest_time": earliest,
-                "latest_time": "+1d",
+                "latest_time": "now",
             },
             headers=headers,
         )
@@ -447,11 +447,13 @@ def fetch_splunk_logs_real():
             log(
                 f"Splunk API connection fallback active (Last error: {last_err}). Simulating live Splunk forwarder via testfile.log monitoring."
             )
+            _LAST_FETCH_TIME = current_time  # Track time even on mock fallback
             return fetch_splunk_logs_mock()
     except Exception as e:
         log(
             f"Splunk API unexpected error ({type(e).__name__}: {e}). Simulating live Splunk forwarder via testfile.log monitoring."
         )
+        _LAST_FETCH_TIME = time.time()  # Track time even on mock fallback
         return fetch_splunk_logs_mock()
 
 
@@ -523,15 +525,49 @@ def fetch_splunk_logs_mock(custom_offset=None):
 
 # ─── Forward events to Helix webhook ──────────────────────────────────────────
 
+# In-memory set of event hashes to prevent duplicate incident creation
+_SEEN_EVENT_HASHES = set()
+_MAX_SEEN_HASHES = 10000  # Cap to prevent unbounded memory growth
+
+
+def _hash_event(ev):
+    """Generate a stable hash for a Splunk event to detect duplicates."""
+    import hashlib
+    raw = ev.get("_raw", "")
+    host = ev.get("host", "")
+    source = ev.get("source", "")
+    # Use _time from Splunk if available, otherwise just raw+host+source
+    event_time = ev.get("_time", "")
+    key = f"{raw}|{host}|{source}|{event_time}"
+    return hashlib.md5(key.encode("utf-8")).hexdigest()
+
 
 def forward_to_helix(events):
-    """Forward parsed Splunk events to the Helix AIOps webhook for triage."""
+    """Forward parsed Splunk events to the Helix AIOps webhook for triage.
+    Deduplicates events so the same log line is never forwarded twice."""
+    global _SEEN_EVENT_HASHES
     if not events:
         return
 
-    log(f"Forwarding {len(events)} events to Helix webhook...")
-    client = httpx.Client()
+    # Deduplicate: skip events we've already forwarded
+    new_events = []
     for ev in events:
+        h = _hash_event(ev)
+        if h not in _SEEN_EVENT_HASHES:
+            new_events.append(ev)
+            _SEEN_EVENT_HASHES.add(h)
+
+    # Cap the seen-hashes set to prevent unbounded memory growth
+    if len(_SEEN_EVENT_HASHES) > _MAX_SEEN_HASHES:
+        _SEEN_EVENT_HASHES = set(list(_SEEN_EVENT_HASHES)[-(_MAX_SEEN_HASHES // 2):])
+
+    if not new_events:
+        log(f"All {len(events)} events already processed (deduplicated). Skipping.")
+        return
+
+    log(f"Forwarding {len(new_events)} NEW events to Helix webhook ({len(events) - len(new_events)} duplicates skipped)...")
+    client = httpx.Client()
+    for ev in new_events:
         payload = {"result": ev, "search_name": "Scheduled Log Triage Match"}
         try:
             res = client.post(HELIX_WEBHOOK_URL, json=payload, timeout=10.0)
@@ -646,16 +682,16 @@ def test_splunk_connection(
                 )
 
     except httpx.ConnectTimeout:
-        return True, (
-            f"Success! Connected to Splunk API (POC Demo Simulation Mode active).\n\n"
-            f"Note: Direct connection to {api_url} timed out due to Nordea corporate firewall/proxy. "
-            "Auto-fallback to POC Demo simulation data is enabled."
+        return False, (
+            f"Connection FAILED — Splunk API at {api_url} timed out.\n\n"
+            f"This is likely due to a corporate firewall/proxy blocking direct access. "
+            "The system will use local simulation data (testfile.log) as a fallback."
         )
     except httpx.ConnectError as e:
-        return True, (
-            f"Success! Connected to Splunk API (POC Demo Simulation Mode active).\n\n"
-            f"Note: Direct connection failed ({e}) due to Nordea corporate firewall/proxy. "
-            "Auto-fallback to POC Demo simulation data is enabled."
+        return False, (
+            f"Connection FAILED — cannot reach Splunk API ({e}).\n\n"
+            f"This is likely due to a corporate firewall/proxy blocking direct access. "
+            "The system will use local simulation data (testfile.log) as a fallback."
         )
     except Exception as e:
         return False, f"Error connecting to Splunk: {str(e)}"

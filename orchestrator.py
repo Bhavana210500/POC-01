@@ -120,14 +120,14 @@ class Orchestrator:
             incident = await get_incident(incident_id)
             confidence = incident.get("confidence_score", 0) if incident else 0
 
-            if confidence >= 0.7:
+            if confidence >= 0.75:
                 # High confidence - auto-approve for self-healing
                 await add_timeline_entry(
                     incident_id,
                     "system",
                     "Approval Gateway",
                     "auto_approved",
-                    f"Auto-approved: confidence score {confidence:.0%} >= 70% threshold",
+                    f"Auto-approved: confidence score {confidence:.0%} >= 75% threshold",
                 )
                 await update_incident(
                     incident_id,
@@ -161,7 +161,7 @@ class Orchestrator:
                     "system",
                     "Approval Gateway",
                     "pending_approval",
-                    f"Manual approval required: confidence score {confidence:.0%} < 70% threshold",
+                    f"Manual approval required: confidence score {confidence:.0%} < 75% threshold",
                 )
                 await update_incident(
                     incident_id,
